@@ -900,11 +900,8 @@ Ext.define('PVE.mod.TempHelper', {\n\
 						const tempStr = \`\${sensorName1}:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(tempVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
 						output.push(tempStr);\n\
 					}\n\
-				} catch(e) { /*_*/ }\n\
-			});\n\
-			psuKeys.forEach((psuKeys, index) => {\n\
-				try {\n\
-					let tempVal = NaN, tempCrit = NaN;\n\
+					tempVal = NaN;\n\
+					tempCrit = NaN;\n\
 					Object.keys(objValue[psuKeys][sensorName2]).forEach((secondLevelKey) => {\n\
 						if (secondLevelKey.endsWith('_input')) {\n\
 							tempVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName2][secondLevelKey]));\n\
