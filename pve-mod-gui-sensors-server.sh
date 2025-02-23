@@ -921,6 +921,161 @@ Ext.define('PVE.mod.TempHelper', {\n\
 			});\n\
 			return '<div style=\"text-align: left; margin-left: 28px;\">' + (output.length > 0 ? output.join(' | ') : 'N/A') + '</div>';\n\
 		}\n\
+	},\n\
+	{\n\
+		itemId: 'psuWatts',\n\
+		colspan: 2,\n\
+		printBar: false,\n\
+		title: gettext('Watts'),\n\
+		iconCls: 'fa fa-fw fa-battery-half',\n\
+		textField: 'sensorsOutput',\n\
+		renderer: function(value) {\n\
+			// sensors configuration\n\
+			const addressPrefix = \"corsairpsu-hid-\";\n\
+			const sensorName1 = \"power total\";\n\
+			const sensorName2 = \"power +12v\";\n\
+			const sensorName3 = \"power +5v\";\n\
+			const sensorName4 = \"power +3.3v\";\n\
+			const tempHelper = Ext.create('PVE.mod.TempHelper', $tempHelperCtorParams);\n\
+			// ---\n\
+			let objValue;\n\
+			try {\n\
+				objValue = JSON.parse(value) || {};\n\
+			} catch(e) {\n\
+				objValue = {};\n\
+			}\n\
+			const psuKeys = Object.keys(objValue).filter(item => String(item).startsWith(addressPrefix)).sort();\n\
+			let output = [];\n\
+			psuKeys.forEach((psuKeys, index) => {\n\
+				try {\n\
+					let pwrVal = NaN;\n\
+					Object.keys(objValue[psuKeys][sensorName1]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							pwrVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName1][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(pwrVal)) {\n\
+						let tempStyle = '';\n\
+						const tempStr = \`Total:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(pwrVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+					pwrVal = NaN;\n\
+					Object.keys(objValue[psuKeys][sensorName2]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							pwrVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName2][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(pwrVal)) {\n\
+						let tempStyle = '';\n\
+						const tempStr = \`+12v:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(pwrVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+					Object.keys(objValue[psuKeys][sensorName3]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							pwrVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName3][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(pwrVal)) {\n\
+						let tempStyle = '';\n\
+						const tempStr = \`+5v:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(pwrVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+					Object.keys(objValue[psuKeys][sensorName4]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							pwrVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName4][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(pwrVal)) {\n\
+						let tempStyle = '';\n\
+						const tempStr = \`+3.3v:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(pwrVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+				} catch(e) { /*_*/ }\n\
+			});\n\
+			return '<div style=\"text-align: left; margin-left: 28px;\">' + (output.length > 0 ? output.join(' | ') : 'N/A') + '</div>';\n\
+		}\n\
+	},\n\
+	{\n\
+		itemId: 'psuAmps',\n\
+		colspan: 2,\n\
+		printBar: false,\n\
+		title: gettext('Amps'),\n\
+		iconCls: 'fa fa-fw fa-battery-half',\n\
+		textField: 'sensorsOutput',\n\
+		renderer: function(value) {\n\
+			// sensors configuration\n\
+			const addressPrefix = \"corsairpsu-hid-\";\n\
+			const sensorName1 = \"curr +12v\";\n\
+			const sensorName2 = \"curr +5v\";\n\
+			const sensorName3 = \"curr +3.3v\";\n\
+			const tempHelper = Ext.create('PVE.mod.TempHelper', $tempHelperCtorParams);\n\
+			// ---\n\
+			let objValue;\n\
+			try {\n\
+				objValue = JSON.parse(value) || {};\n\
+			} catch(e) {\n\
+				objValue = {};\n\
+			}\n\
+			const psuKeys = Object.keys(objValue).filter(item => String(item).startsWith(addressPrefix)).sort();\n\
+			let output = [];\n\
+			psuKeys.forEach((psuKeys, index) => {\n\
+				try {\n\
+					let ampVal = NaN, ampCrit = NaN;\n\
+					Object.keys(objValue[psuKeys][sensorName1]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							ampVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName1][secondLevelKey]));\n\
+						} else if (secondLevelKey.endsWith('_crit')) {\n\
+							ampCrit = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName1][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(ampVal)) {\n\
+						let tempStyle = '';\n\
+						if (!isNaN(ampCrit) && ampVal >= ampCrit) {\n\
+							tempStyle = 'color: red; font-weight: bold;';\n\
+						}\n\
+						const tempStr = \`+12v:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(ampVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+					// ---\n\
+					ampVal = NaN;\n\
+					ampCrit = NaN;\n\
+					Object.keys(objValue[psuKeys][sensorName2]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							ampVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName2][secondLevelKey]));\n\
+						} else if (secondLevelKey.endsWith('_crit')) {\n\
+							ampCrit = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName2][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(ampVal)) {\n\
+						let tempStyle = '';\n\
+						if (!isNaN(ampCrit) && ampVal >= ampCrit) {\n\
+							tempStyle = 'color: red; font-weight: bold;';\n\
+						}\n\
+						const tempStr = \`+5v:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(ampVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+					// ---\n\
+					ampVal = NaN;\n\
+					ampCrit = NaN;\n\
+					Object.keys(objValue[psuKeys][sensorName3]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							ampVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName3][secondLevelKey]));\n\
+						} else if (secondLevelKey.endsWith('_crit')) {\n\
+							ampCrit = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName3][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(ampVal)) {\n\
+						let tempStyle = '';\n\
+						if (!isNaN(ampCrit) && ampVal >= ampCrit) {\n\
+							tempStyle = 'color: red; font-weight: bold;';\n\
+						}\n\
+						const tempStr = \`+3.3v:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(ampVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+				} catch(e) { /*_*/ }\n\
+			});\n\
+			return '<div style=\"text-align: left; margin-left: 28px;\">' + (output.length > 0 ? output.join(' | ') : 'N/A') + '</div>';\n\
+		}\n\
 	},
 		}" "$PVE_MANAGER_LIB_JS_FILE"
 		fi
