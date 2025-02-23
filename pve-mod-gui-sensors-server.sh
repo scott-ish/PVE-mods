@@ -10,7 +10,7 @@
 # Note: use these settings only if the displayed layout is broken
 CPU_ITEMS_PER_ROW=0
 NVME_ITEMS_PER_ROW=0
-HDD_ITEMS_PER_ROW=0
+HDD_ITEMS_PER_ROW=6
 
 # Known CPU sensor names. They can be full or partial but should ensure unambiguous identification.
 # Should new ones be added, also update logic in configure() function.
@@ -145,20 +145,48 @@ function configure {
 		ENABLE_RAM_TEMP=false
 	fi
 
-	# Check if HDD/SSD data is installed
-	msg "\nDetecting support for HDD/SDD temperature sensors..."
+	# Look for psu info
+	msg "\nDetecting support for PSU sensors..."
+	if (echo "$sensorsOutput" | grep -q '"corsairpsu":'); then
+		msg "Detected PSU temperature sensors:\n$(echo "$sensorsOutput" | grep -o '"corsairpsu[^"]*"' | sed 's/"//g')"
+		ENABLE_PSU_SENS=true
+		SENSORS_DETECTED=true
+	else
+		warn "No RAM temperature sensors found."
+		ENABLE_PSU_SENS=false
+	fi
+
+	# Check if HDD data is installed
+	msg "\nDetecting support for HDD temperature sensors..."
 	if (lsmod | grep -wq "drivetemp"); then
-		# Check if SDD/HDD data is available
-		if (echo "$sensorsOutput" | grep -q "drivetemp-scsi-"); then
-			msg "Detected sensors:\n$(echo "$sensorsOutput" | grep -o '"drivetemp-scsi[^"]*"' | sed 's/"//g')"
+		# Check if HDD data is available
+		if (echo "$sensorsOutput" | grep -q "drivetemp-scsi-0"); then
+			msg "Detected sensors:\n$(echo "$sensorsOutput" | grep -o '"drivetemp-scsi-0[^"]*"' | sed 's/"//g')"
 			ENABLE_HDD_TEMP=true
 			SENSORS_DETECTED=true
 		else
-			warn "Kernel module \"drivetemp\" is not installed. HDD/SDD temperatures will not be available."
+			warn "Kernel module \"drivetemp\" is not installed. HDD/ temperatures will not be available."
 			ENABLE_HDD_TEMP=false
 		fi
 	else
-		warn "No HDD/SSD temperature sensors found."
+		warn "No HDD temperature sensors found."
+		ENABLE_HDD_TEMP=false
+	fi
+
+	# Check if SSD data is installed
+	msg "\nDetecting support for SDD temperature sensors..."
+	if (lsmod | grep -wq "drivetemp"); then
+		# Check if SDD/HDD data is available
+		if (echo "$sensorsOutput" | grep -q "drivetemp-scsi-[1-9]"); then
+			msg "Detected sensors:\n$(echo "$sensorsOutput" | grep -o '"drivetemp-scsi-[1-9][^"]*"' | sed 's/"//g')"
+			ENABLE_SSD_TEMP=true
+			SENSORS_DETECTED=true
+		else
+			warn "Kernel module \"drivetemp\" is not installed. SDD temperatures will not be available."
+			ENABLE_SSD_TEMP=false
+		fi
+	else
+		warn "No SSD temperature sensors found."
 		ENABLE_HDD_TEMP=false
 	fi
 
