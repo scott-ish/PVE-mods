@@ -596,6 +596,12 @@ Ext.define('PVE.mod.TempHelper', {\n\
 						} else if (secondLevelKey.endsWith('_crit')) {\n\
 							tempCrit = tempHelper.getTemp(parseFloat(objValue[drvKey][sensorName][secondLevelKey]));\n\
 						}\n\
+						if (!isNaN(tempMax) && tempMax < 2) {\n\
+							tempMax = 61;\n\
+						}\n\
+						if (!isNaN(tempCrit) && tempCrit < 2) {\n\
+							tempMax = 55;\n\
+						}\n\
 					});\n\
 					if (!isNaN(tempVal)) {\n\
 						let tempStyle = '';\n\
@@ -659,6 +665,12 @@ Ext.define('PVE.mod.TempHelper', {\n\
 							tempMax = tempHelper.getTemp(parseFloat(objValue[drvKey][sensorName][secondLevelKey]));\n\
 						} else if (secondLevelKey.endsWith('_crit')) {\n\
 							tempCrit = tempHelper.getTemp(parseFloat(objValue[drvKey][sensorName][secondLevelKey]));\n\
+						}\n\
+						if (!isNaN(tempMax) && tempMax < 2) {\n\
+							tempMax = 61;\n\
+						}\n\
+						if (!isNaN(tempCrit) && tempCrit < 2) {\n\
+							tempMax = 55;\n\
 						}\n\
 					});\n\
 					if (!isNaN(tempVal)) {\n\
@@ -834,6 +846,88 @@ Ext.define('PVE.mod.TempHelper', {\n\
 		}" "$PVE_MANAGER_LIB_JS_FILE"
 		fi
 
+		if [ $ENABLE_PSU_SENS = true ]; then
+			# Add PSU sensor display
+			sed -i "/^Ext.define('PVE.node.StatusView',/ {
+				:a;
+				/items:/!{N;ba;}
+				:b;
+				/'thermal.*},/!{N;bb;}
+				a\
+				\\
+	{\n\
+		xtype: 'box',\n\
+		colspan: 2,\n\
+		html: gettext('PSU'),\n\
+	},\n\
+	{\n\
+		itemId: 'psuTemps',\n\
+		colspan: 2,\n\
+		printBar: false,\n\
+		title: gettext('Temps'),\n\
+		iconCls: 'fa fa-fw fa-thermometer-half',\n\
+		textField: 'sensorsOutput',\n\
+		renderer: function(value) {\n\
+			// sensors configuration\n\
+			const addressPrefix = \"corsairpsu-hid-\";\n\
+			const sensorName1 = \"vrm temp\";\n\
+			const sensorName2 = \"case temp\";\n\
+			const tempHelper = Ext.create('PVE.mod.TempHelper', $tempHelperCtorParams);\n\
+			// ---\n\
+			let objValue;\n\
+			try {\n\
+				objValue = JSON.parse(value) || {};\n\
+			} catch(e) {\n\
+				objValue = {};\n\
+			}\n\
+			const psuKeys = Object.keys(objValue).filter(item => String(item).startsWith(addressPrefix)).sort();\n\
+			let output = [];\n\
+			psuKeys.forEach((psuKeys, index) => {\n\
+				try {\n\
+					let tempVal = NaN, tempCrit = NaN;\n\
+					Object.keys(objValue[psuKeys][sensorName1]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							tempVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName1][secondLevelKey]));\n\
+						} else if (secondLevelKey.endsWith('_crit')) {\n\
+							tempCrit = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName1][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(tempVal)) {\n\
+						let tempStyle = '';\n\
+						if (!isNaN(tempCrit) && tempVal >= tempCrit) {\n\
+							tempStyle = 'color: red; font-weight: bold;';\n\
+						}\n\
+						const tempStr = \`\${sensorName1}:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(tempVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+				} catch(e) { /*_*/ }\n\
+			});\n\
+			psuKeys.forEach((psuKeys, index) => {\n\
+				try {\n\
+					let tempVal = NaN, tempCrit = NaN;\n\
+					Object.keys(objValue[psuKeys][sensorName2]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							tempVal = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName2][secondLevelKey]));\n\
+						} else if (secondLevelKey.endsWith('_crit')) {\n\
+							tempCrit = tempHelper.getTemp(parseFloat(objValue[psuKeys][sensorName2][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(tempVal)) {\n\
+						let tempStyle = '';\n\
+						if (!isNaN(tempCrit) && tempVal >= tempCrit) {\n\
+							tempStyle = 'color: red; font-weight: bold;';\n\
+						}\n\
+						const tempStr = \`\${sensorName2}:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(tempVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						output.push(tempStr);\n\
+					}\n\
+				} catch(e) { /*_*/ }\n\
+			});\n\
+			return '<div style=\"text-align: left; margin-left: 28px;\">' + (output.length > 0 ? output.join(' | ') : 'N/A') + '</div>';\n\
+		}\n\
+	},
+		}" "$PVE_MANAGER_LIB_JS_FILE"
+		fi
+
 		if [ $ENABLE_RAM_TEMP = true ]; then
 			# Add Ram temperature display
 			sed -i "/^Ext.define('PVE.node.StatusView',/ {
@@ -928,6 +1022,8 @@ Ext.define('PVE.mod.TempHelper', {\n\
 		local lastItemId=""
 		if [ $ENABLE_HDD_TEMP = true ]; then
 			lastItemId="thermalHdd"
+		if [ $ENABLE_SSD_TEMP = true ]; then
+			lastItemId="thermalSsd"
 		elif [ $ENABLE_NVME_TEMP = true ]; then
 			lastItemId="thermalNvme"
 		elif [ $ENABLE_FAN_SPEED = true ]; then
