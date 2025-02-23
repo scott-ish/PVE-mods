@@ -187,7 +187,7 @@ function configure {
 		fi
 	else
 		warn "No SSD temperature sensors found."
-		ENABLE_HDD_TEMP=false
+		ENABLE_SSD_TEMP=false
 	fi
 
 	# Check if NVMe data is available
@@ -1019,7 +1019,7 @@ Ext.define('PVE.mod.TempHelper', {\n\
 		local lastItemId=""
 		if [ $ENABLE_HDD_TEMP = true ]; then
 			lastItemId="thermalHdd"
-		if [ $ENABLE_SSD_TEMP = true ]; then
+		elif [ $ENABLE_SSD_TEMP = true ]; then
 			lastItemId="thermalSsd"
 		elif [ $ENABLE_NVME_TEMP = true ]; then
 			lastItemId="thermalNvme"
