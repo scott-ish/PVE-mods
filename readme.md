@@ -3,6 +3,9 @@ A small collection of scripts and mods for Proxmox Virtual Environment (PVE)
 
 If you find this helpful, a small donation is appreciated, [![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=K8XPMSEBERH3W).
 
+## Node sensor readings view (server)
+Customised server script to show my specific details on the proxmox gui.
+
 ## Node sensor readings view
 (Tested compatibility: 7.x - 8.3.3)
 ![Promxox temp mod](https://github.com/Meliox/PVE-mods/blob/main/pve-mod-sensors.png?raw=true)
