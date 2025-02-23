@@ -596,11 +596,11 @@ Ext.define('PVE.mod.TempHelper', {\n\
 						} else if (secondLevelKey.endsWith('_crit')) {\n\
 							tempCrit = tempHelper.getTemp(parseFloat(objValue[drvKey][sensorName][secondLevelKey]));\n\
 						}\n\
-						if (!isNaN(tempMax) && tempMax < 2) {\n\
-							tempMax = 61;\n\
+						if (!isNaN(tempMax) && (tempMax <= 5.0)) {\n\
+							tempMax = 61.0;\n\
 						}\n\
-						if (!isNaN(tempCrit) && tempCrit < 2) {\n\
-							tempMax = 55;\n\
+						if (!isNaN(tempCrit) && (tempCrit <= 5.0)) {\n\
+							tempMax = 55.0;\n\
 						}\n\
 					});\n\
 					if (!isNaN(tempVal)) {\n\
@@ -666,11 +666,11 @@ Ext.define('PVE.mod.TempHelper', {\n\
 						} else if (secondLevelKey.endsWith('_crit')) {\n\
 							tempCrit = tempHelper.getTemp(parseFloat(objValue[drvKey][sensorName][secondLevelKey]));\n\
 						}\n\
-						if (!isNaN(tempMax) && tempMax < 2) {\n\
-							tempMax = 61;\n\
+						if (!isNaN(tempMax) && tempMax <= 5) {\n\
+							tempMax = 61.0;\n\
 						}\n\
-						if (!isNaN(tempCrit) && tempCrit < 2) {\n\
-							tempMax = 55;\n\
+						if (!isNaN(tempCrit) && tempCrit <= 5) {\n\
+							tempMax = 55.0;\n\
 						}\n\
 					});\n\
 					if (!isNaN(tempVal)) {\n\
