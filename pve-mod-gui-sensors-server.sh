@@ -897,7 +897,7 @@ Ext.define('PVE.mod.TempHelper', {\n\
 						if (!isNaN(tempCrit) && tempVal >= tempCrit) {\n\
 							tempStyle = 'color: red; font-weight: bold;';\n\
 						}\n\
-						const tempStr = \`\${sensorName1}:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(tempVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						const tempStr = \`VRM:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(tempVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
 						output.push(tempStr);\n\
 					}\n\
 					tempVal = NaN;\n\
@@ -914,7 +914,7 @@ Ext.define('PVE.mod.TempHelper', {\n\
 						if (!isNaN(tempCrit) && tempVal >= tempCrit) {\n\
 							tempStyle = 'color: red; font-weight: bold;';\n\
 						}\n\
-						const tempStr = \`\${sensorName2}:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(tempVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						const tempStr = \`Case:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(tempVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
 						output.push(tempStr);\n\
 					}\n\
 				} catch(e) { /*_*/ }\n\
