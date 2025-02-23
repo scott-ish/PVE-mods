@@ -147,12 +147,12 @@ function configure {
 
 	# Look for psu info
 	msg "\nDetecting support for PSU sensors..."
-	if (echo "$sensorsOutput" | grep -q '"corsairpsu":'); then
-		msg "Detected PSU temperature sensors:\n$(echo "$sensorsOutput" | grep -o '"corsairpsu[^"]*"' | sed 's/"//g')"
+	if (echo "$sensorsOutput" | grep -q "corsairpsu-hid"); then
+		msg "Detected PSU sensors:\n$(echo "$sensorsOutput" | grep -o '"corsairpsu-hid[^"]*"' | sed 's/"//g')"
 		ENABLE_PSU_SENS=true
 		SENSORS_DETECTED=true
 	else
-		warn "No RAM temperature sensors found."
+		warn "No PSU sensors found."
 		ENABLE_PSU_SENS=false
 	fi
 
@@ -566,12 +566,12 @@ Ext.define('PVE.mod.TempHelper', {\n\
 		itemId: 'thermalHdd',\n\
 		colspan: 2,\n\
 		printBar: false,\n\
-		title: gettext('HDD/SSD Thermal State'),\n\
+		title: gettext('HDD Thermal State'),\n\
 		iconCls: 'fa fa-fw fa-thermometer-half',\n\
 		textField: 'sensorsOutput',\n\
 		renderer: function(value) {\n\
 			// sensors configuration\n\
-			const addressPrefix = \"drivetemp-scsi-\";\n\
+			const addressPrefix = \"drivetemp-scsi-0\";\n\
 			const sensorName = \"temp1\";\n\
 			const tempHelper = Ext.create('PVE.mod.TempHelper', $tempHelperCtorParams);\n\
 			// display configuration\n\
@@ -584,6 +584,70 @@ Ext.define('PVE.mod.TempHelper', {\n\
 				objValue = {};\n\
 			}\n\
 			const drvKeys = Object.keys(objValue).filter(item => String(item).startsWith(addressPrefix)).sort();\n\
+			let temps = [];\n\
+			drvKeys.forEach((drvKey, index) => {\n\
+				try {\n\
+					let tempVal = NaN, tempMax = NaN, tempCrit = NaN;\n\
+					Object.keys(objValue[drvKey][sensorName]).forEach((secondLevelKey) => {\n\
+						if (secondLevelKey.endsWith('_input')) {\n\
+							tempVal = tempHelper.getTemp(parseFloat(objValue[drvKey][sensorName][secondLevelKey]));\n\
+						} else if (secondLevelKey.endsWith('_max')) {\n\
+							tempMax = tempHelper.getTemp(parseFloat(objValue[drvKey][sensorName][secondLevelKey]));\n\
+						} else if (secondLevelKey.endsWith('_crit')) {\n\
+							tempCrit = tempHelper.getTemp(parseFloat(objValue[drvKey][sensorName][secondLevelKey]));\n\
+						}\n\
+					});\n\
+					if (!isNaN(tempVal)) {\n\
+						let tempStyle = '';\n\
+						if (!isNaN(tempMax) && tempVal >= tempMax) {\n\
+							tempStyle = 'color: #FFC300; font-weight: bold;';\n\
+						}\n\
+						if (!isNaN(tempCrit) && tempVal >= tempCrit) {\n\
+							tempStyle = 'color: red; font-weight: bold;';\n\
+						}\n\
+						const tempStr = \`Drive&nbsp;\${index + 1}:&nbsp;<span style=\"\${tempStyle}\">\${Ext.util.Format.number(tempVal, '0.0')}\${tempHelper.getUnit()}</span>\`;\n\
+						temps.push(tempStr);\n\
+					}\n\
+				} catch(e) { /*_*/ }\n\
+			});\n\
+			const result = temps.map((strTemp, index, arr) => { return strTemp + (index + 1 < arr.length ? ((index + 1) % itemsPerRow === 0 ? '<br>' : '&nbsp;| ') : ''); });\n\
+			return '<div style=\"text-align: left; margin-left: 28px;\">' + (result.length > 0 ? result.join('') : 'N/A') + '</div>';\n\
+		}\n\
+	},
+		}" "$PVE_MANAGER_LIB_JS_FILE"
+		fi
+
+		if [ $ENABLE_SSD_TEMP = true ]; then
+			sed -i "/^Ext.define('PVE.node.StatusView',/ {
+				:a;
+				/items:/!{N;ba;}
+				:b;
+				/'thermal.*},/!{N;bb;}
+				a\
+				\\
+	{\n\
+		itemId: 'thermalSsd',\n\
+		colspan: 2,\n\
+		printBar: false,\n\
+		title: gettext('SSD Thermal State'),\n\
+		iconCls: 'fa fa-fw fa-thermometer-half',\n\
+		textField: 'sensorsOutput',\n\
+		renderer: function(value) {\n\
+			// sensors configuration\n\
+			const addressPrefix = \"drivetemp-scsi-\";\n\
+			const addressPrefixHdd = \"drivetemp-scsi-0\";\n\
+			const sensorName = \"temp1\";\n\
+			const tempHelper = Ext.create('PVE.mod.TempHelper', $tempHelperCtorParams);\n\
+			// display configuration\n\
+			const itemsPerRow = ${HDD_ITEMS_PER_ROW};\n\
+			// ---\n\
+			let objValue;\n\
+			try {\n\
+				objValue = JSON.parse(value) || {};\n\
+			} catch(e) {\n\
+				objValue = {};\n\
+			}\n\
+			const drvKeys = Object.keys(objValue).filter(item => String(item).startsWith(addressPrefix)).filter(item => !String(item).startsWith(addressPrefixHdd)).sort();\n\
 			let temps = [];\n\
 			drvKeys.forEach((drvKey, index) => {\n\
 				try {\n\
